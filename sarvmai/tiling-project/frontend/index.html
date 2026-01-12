@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-Optimal Tiling Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+            align-items: start;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card:first-child {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .tile-input-group {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .tile-input-group h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .tile-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            align-items: center;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #555;
+            font-weight: 600;
+        }
+
+        .result-value {
+            color: #667eea;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .total-cost {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .visualization {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            overflow-x: auto;
+        }
+
+        .ascii-grid {
+            font-family: 'Courier New', monospace;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre;
+            line-height: 1.5;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #c33;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tile-legend {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            border: 2px solid #ddd;
+        }
+
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .tile-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧩 Non-Optimal Tiling Calculator</h1>
+            <p>Maximize flooring costs with strategic tile placement</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Input Panel -->
+            <div class="card">
+                <h2>📐 Room & Tile Configuration</h2>
+                
+                <div class="info-box">
+                    <strong>Note:</strong> This calculator finds the maximum cost tiling solution. Enter your room dimensions and tile specifications.
+                </div>
+
+                <div class="form-group">
+                    <label for="length">Room Length (meters)</label>
+                    <input type="number" id="length" placeholder="e.g., 6" min="1" step="0.1" value="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="width">Room Width (meters)</label>
+                    <input type="number" id="width" placeholder="e.g., 4" min="1" step="0.1" value="4">
+                </div>
+
+                <!-- Tile A -->
+                <div class="tile-input-group">
+                    <h3>Tile Type A</h3>
+                    <div class="tile-inputs">
+                        <div class="form-group">
+                            <label for="tileA_size">Side Length</label>
+                            <input type="number" id="tileA_size" placeholder="e.g., 1" min="0.1" step="0.1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="tileA_cost">Cost per Tile</label>
+                            <input type="number" id="tileA_cost" placeholder="e.g., 2" min="0" step="0.1" value="2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tile B -->
+                <div class="tile-input-group">
+                    <h3>Tile Type B</h3>
+                    <div class="tile-inputs">
+                        <div class="form-group">
+                            <label for="tileB_size">Side Length</label>
+                            <input type="number" id="tileB_size" placeholder="e.g., 2" min="0.1" step="0.1" value="2">
+                        </div>
+                        <div class="form-group">
+                            <label for="tileB_cost">Cost per Tile</label>
+                            <input type="number" id="tileB_cost" placeholder="e.g., 3" min="0" step="0.1" value="3">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tile C -->
+                <div class="tile-input-group">
+                    <h3>Tile Type C</h3>
+                    <div class="tile-inputs">
+                        <div class="form-group">
+                            <label for="tileC_size">Side Length</label>
+                            <input type="number" id="tileC_size" placeholder="e.g., 3" min="0.1" step="0.1" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="tileC_cost">Cost per Tile</label>
+                            <input type="number" id="tileC_cost" placeholder="e.g., 6" min="0" step="0.1" value="6">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="calculateTiling()">🚀 Calculate Solution</button>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="card">
+                <h2>📊 Results</h2>
+                <div id="results-container" style="display: none;">
+                    <div class="results">
+                        <div class="result-item">
+                            <span class="result-label">Tiles of Size A:</span>
+                            <span class="result-value" id="tileA_count">0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Tiles of Size B:</span>
+                            <span class="result-value" id="tileB_count">0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Tiles of Size C:</span>
+                            <span class="result-value" id="tileC_count">0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Cost (A):</span>
+                            <span class="result-value" id="costA">0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Cost (B):</span>
+                            <span class="result-value" id="costB">0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Cost (C):</span>
+                            <span class="result-value" id="costC">0</span>
+                        </div>
+                        <div class="total-cost">
+                            Total Cost: $<span id="total-cost">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="error-container" style="display: none;">
+                    <div class="error" id="error-message"></div>
+                </div>
+                <div id="loading-container" style="display: none;">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Calculating optimal solution...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization -->
+        <div class="card">
+            <h2>🎨 Tiling Visualization</h2>
+            <div id="visualization-container" style="display: none;">
+                <div class="tile-legend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff6b6b;"></span>
+                        <strong>Tile A</strong>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #4ecdc4;"></span>
+                        <strong>Tile B</strong>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ffe66d;"></span>
+                        <strong>Tile C</strong>
+                    </div>
+                </div>
+                <div class="visualization">
+                    <div class="ascii-grid" id="ascii-visualization"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000';
+
+        async function calculateTiling() {
+            const length = parseFloat(document.getElementById('length').value);
+            const width = parseFloat(document.getElementById('width').value);
+            
+            const tileA_size = parseFloat(document.getElementById('tileA_size').value);
+            const tileA_cost = parseFloat(document.getElementById('tileA_cost').value);
+            
+            const tileB_size = parseFloat(document.getElementById('tileB_size').value);
+            const tileB_cost = parseFloat(document.getElementById('tileB_cost').value);
+            
+            const tileC_size = parseFloat(document.getElementById('tileC_size').value);
+            const tileC_cost = parseFloat(document.getElementById('tileC_cost').value);
+
+            // Validate inputs
+            if (!length || !width || !tileA_size || !tileB_size || !tileC_size) {
+                showError('Please fill in all dimensions');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                console.log('Sending request to:', `${API_URL}/calculate`);
+                const response = await fetch(`${API_URL}/calculate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        length: length,
+                        width: width,
+                        tiles: [
+                            { size: tileA_size, cost: tileA_cost },
+                            { size: tileB_size, cost: tileB_cost },
+                            { size: tileC_size, cost: tileC_cost }
+                        ]
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (data.status === 'success') {
+                    displayResults(data);
+                } else {
+                    showError(data.message || 'Calculation failed');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showError(`Error: ${error.message}`);
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById('loading-container').style.display = 'none';
+            document.getElementById('error-container').style.display = 'none';
+
+            // Display tile counts and costs
+            const tiles = data.tiles_used;
+            console.log('Displaying results:', tiles);
+            
+            document.getElementById('tileA_count').textContent = tiles[0].count;
+            document.getElementById('tileB_count').textContent = tiles[1].count;
+            document.getElementById('tileC_count').textContent = tiles[2].count;
+
+            document.getElementById('costA').textContent = `$${tiles[0].total_cost.toFixed(2)}`;
+            document.getElementById('costB').textContent = `$${tiles[1].total_cost.toFixed(2)}`;
+            document.getElementById('costC').textContent = `$${tiles[2].total_cost.toFixed(2)}`;
+
+            document.getElementById('total-cost').textContent = data.total_cost.toFixed(2);
+
+            // Display visualization
+            const vizContainer = document.getElementById('ascii-visualization');
+            if (data.visualization) {
+                vizContainer.textContent = data.visualization;
+                console.log('Visualization updated');
+            } else {
+                vizContainer.textContent = 'No visualization available';
+            }
+
+            // Show results
+            document.getElementById('results-container').style.display = 'block';
+            document.getElementById('visualization-container').style.display = 'block';
+        }
+
+        function showError(message) {
+            document.getElementById('loading-container').style.display = 'none';
+            document.getElementById('results-container').style.display = 'none';
+            document.getElementById('visualization-container').style.display = 'none';
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-container').style.display = 'block';
+        }
+
+        function showLoading() {
+            document.getElementById('loading-container').style.display = 'block';
+            document.getElementById('results-container').style.display = 'none';
+            document.getElementById('error-container').style.display = 'none';
+            document.getElementById('visualization-container').style.display = 'none';
+        }
+
+        // Load sample data on page load
+        window.addEventListener('load', () => {
+            console.log('Tiling Calculator loaded. API URL:', API_URL);
+        });
+    </script>
+</body>
+</html>
